@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=whatsapp_crm
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  evolution-api:
+    image: atendai/evolution-api:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - AUTHENTICATION_API_KEY=minha-chave-secreta
+    volumes:
+      - evolution_instances:/evolution/instances
+
+  backend:
+    build: .
+    command: daphne -b 0.0.0.0 -p 8000 whatsapp_crm.asgi:application
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - evolution-api
+
+  worker:
+    build: .
+    command: celery -A whatsapp_crm worker -l info
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+      - evolution-api
+
+volumes:
+  postgres_data:
+  evolution_instances:
