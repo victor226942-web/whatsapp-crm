@@ -8,3 +8,5 @@ staticfiles/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+
+evolution-vps/.env
